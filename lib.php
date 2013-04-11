@@ -18,7 +18,6 @@
  * APC cache store main library.
  *
  * @package    cachestore_apc
- * @category   cache
  * @copyright  2012 Sam Hemelryk
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */

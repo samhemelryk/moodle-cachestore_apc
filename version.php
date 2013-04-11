@@ -18,14 +18,13 @@
  * APC cache store version information.
  *
  * @package    cachestore_apc
- * @category   cache
  * @copyright  2012 Sam Hemelryk
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
 defined('MOODLE_INTERNAL') || die;
 
-$plugin->version = 2012112700;
-$plugin->requires = 2012112700; // Moodle 2.4 1 week prior to release.
-$plugin->maturity = MATURITY_BETA;
+$plugin->version = 2013033000;
+$plugin->requires = 2012112700;
+$plugin->maturity = MATURITY_STABLE;
 $plugin->component = 'cachestore_apc';
