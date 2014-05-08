@@ -256,7 +256,11 @@ class cachestore_apc extends cache_store implements cache_is_key_aware {
     public function purge() {
         $info = apc_cache_info("user");
         foreach ($info['cache_list'] as $item) {
-            apc_delete($item['info']);
+            if (isset($item['key'])) {
+                apc_delete($item['key']);
+            } else if (isset($item['info'])) {
+                apc_delete($item['info']);
+            }
         }
         return true;
     }
