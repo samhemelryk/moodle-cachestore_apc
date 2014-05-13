@@ -24,7 +24,7 @@
 
 defined('MOODLE_INTERNAL') || die;
 
-$plugin->version = 2013033000;
+$plugin->version = 2014051400;
 $plugin->requires = 2012112700;
 $plugin->maturity = MATURITY_STABLE;
 $plugin->component = 'cachestore_apc';
