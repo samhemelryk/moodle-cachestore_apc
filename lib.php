@@ -60,7 +60,7 @@ class cachestore_apc extends cache_store implements cache_is_key_aware {
      * @return bool True if the mode is supported.
      */
     public static function is_supported_mode($mode) {
-        return ($mode === self::MODE_APPLICATION);
+        return ($mode === self::MODE_APPLICATION || $mode === self::MODE_SESSION);
     }
 
     /**
@@ -80,7 +80,7 @@ class cachestore_apc extends cache_store implements cache_is_key_aware {
      * @return int The supported modes.
      */
     public static function get_supported_modes(array $configuration = array()) {
-        return self::MODE_APPLICATION;
+        return self::MODE_APPLICATION + self::MODE_SESSION;
     }
 
     /**
@@ -281,6 +281,13 @@ class cachestore_apc extends cache_store implements cache_is_key_aware {
      * @return cache_store
      */
     public static function initialise_test_instance(cache_definition $definition) {
+        $testperformance = get_config('cachestore_apc', 'testperformance');
+        if (empty($testperformance)) {
+            return false;
+        }
+        if (!self::are_requirements_met()) {
+            return false;
+        }
         $name = 'APC test';
         $cache = new cachestore_apc($name);
         $cache->initialise($definition);
@@ -317,5 +324,28 @@ class cachestore_apc extends cache_store implements cache_is_key_aware {
     public function has_all(array $keys) {
         $result = apc_exists($keys);
         return count($result) === count($keys);
+    }
+
+    /**
+     * Generates an instance of the cache store that can be used for testing.
+     *
+     * @param cache_definition $definition
+     * @return cachestore_apc|false
+     */
+    public static function initialise_unit_test_instance(cache_definition $definition) {
+        if (!self::are_requirements_met()) {
+            return false;
+        }
+        if (!defined('TEST_CACHESTORE_APC')) {
+            return false;
+        }
+
+        $store = new cachestore_apc('Test APC', array());
+        if (!$store->is_ready()) {
+            return false;
+        }
+        $store->initialise($definition);
+
+        return $store;
     }
 }

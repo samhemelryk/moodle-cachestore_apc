@@ -15,13 +15,38 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * APC cache store language strings.
+ * APC unit tests.
+ *
+ * If you wish to use these unit tests all you need to do is add the following definition to
+ * your config.php file.
+ *
+ * define('TEST_CACHESTORE_XCACHE', true);
  *
  * @package    cachestore_apc
- * @copyright  2012 Sam Hemelryk
+ * @copyright  2014 Sam Hemelryk
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-$string['pluginname'] = 'Alternative PHP cache (APC)';
-$string['testperformance'] = 'Test performance';
-$string['testperformance_desc'] = 'If enabled APC performance will be included when viewing the Test performance page in the administration block. Enabling this on a production site is not recommended.';
+defined('MOODLE_INTERNAL') || die();
+
+// Include the necessary evils.
+global $CFG;
+require_once($CFG->dirroot.'/cache/tests/fixtures/stores.php');
+require_once($CFG->dirroot.'/cache/stores/apc/lib.php');
+
+/**
+ * APC unit test class.
+ *
+ * @package    cachestore_apc
+ * @copyright  2014 Sam Hemelryk
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
+class cachestore_apc_test extends cachestore_tests {
+    /**
+     * Returns the apc class name
+     * @return string
+     */
+    protected function get_class_name() {
+        return 'cachestore_apc';
+    }
+}

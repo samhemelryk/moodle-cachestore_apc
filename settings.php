@@ -15,13 +15,22 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * APC cache store language strings.
+ * The settings for the APC store.
+ *
+ * This file is part of the APC cache store, it contains the API for interacting with an instance of the store.
  *
  * @package    cachestore_apc
- * @copyright  2012 Sam Hemelryk
+ * @copyright  2014 Sam Hemelryk
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-$string['pluginname'] = 'Alternative PHP cache (APC)';
-$string['testperformance'] = 'Test performance';
-$string['testperformance_desc'] = 'If enabled APC performance will be included when viewing the Test performance page in the administration block. Enabling this on a production site is not recommended.';
+defined('MOODLE_INTERNAL') || die;
+
+$settings->add(
+    new admin_setting_configcheckbox(
+        'cachestore_apc/testperformance',
+        new lang_string('testperformance', 'cachestore_apc'),
+        new lang_string('testperformance_desc', 'cachestore_apc'),
+        false
+    )
+);
