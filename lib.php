@@ -31,6 +31,11 @@
 class cachestore_apc extends cache_store implements cache_is_key_aware {
 
     /**
+     * The required version of APC for this extension.
+     */
+    const REQUIRED_VERSION = '3.1.1';
+
+    /**
      * The name of this store instance.
      * @var string
      */
@@ -43,6 +48,12 @@ class cachestore_apc extends cache_store implements cache_is_key_aware {
     protected $definition = null;
 
     /**
+     * The prefix to use on all keys.
+     * @var null
+     */
+    protected $prefix = null;
+
+    /**
      * Static method to check that the APC stores requirements have been met.
      *
      * It checks that the APC extension has been loaded and that it has been enabled.
@@ -50,7 +61,14 @@ class cachestore_apc extends cache_store implements cache_is_key_aware {
      * @return bool True if the stores software/hardware requirements have been met and it can be used. False otherwise.
      */
     public static function are_requirements_met() {
-        return extension_loaded('apc') && (bool)ini_get('apc.enabled');
+        if (!extension_loaded('apc') ||    // APC PHP extension is not available.
+            !ini_get('apc.enabled')        // APC is not enabled.
+        ) {
+            return false;
+        }
+
+        $version = phpversion('apc');
+        return $version && version_compare($version, self::REQUIRED_VERSION, '>=');
     }
 
     /**
@@ -135,6 +153,7 @@ class cachestore_apc extends cache_store implements cache_is_key_aware {
      */
     public function initialise(cache_definition $definition) {
         $this->definition = $definition;
+        $this->prefix = $definition->generate_definition_hash().'__';
         return true;
     }
 
@@ -156,12 +175,24 @@ class cachestore_apc extends cache_store implements cache_is_key_aware {
     }
 
     /**
+     * Prepares the given key for use.
+     *
+     * Should be called before all interaction.
+     *
+     * @return string
+     */
+    protected function prepare_key($key) {
+        return $this->prefix . $key;
+    }
+
+    /**
      * Retrieves an item from the cache store given its key.
      *
      * @param string $key The key to retrieve
      * @return mixed The data that was associated with the key, or false if the key did not exist.
      */
     public function get($key) {
+        $key = $this->prepare_key($key);
         $success = false;
         $outcome = apc_fetch($key, $success);
         if ($success) {
@@ -180,12 +211,16 @@ class cachestore_apc extends cache_store implements cache_is_key_aware {
      *      be set to false.
      */
     public function get_many($keys) {
+        $map = array();
+        foreach ($keys as $key) {
+            $map[$key] = $this->prepare_key($key);
+        }
         $outcomes = array();
         $success = false;
-        $results = apc_fetch($keys, $success);
-        foreach ($keys as $key) {
-            if ($success && array_key_exists($key, $results) && !empty($results[$key])) {
-                $outcomes[$key] = $results[$key];
+        $results = apc_fetch($map, $success);
+        foreach ($map as $key => $used) {
+            if ($success && array_key_exists($used, $results) && !empty($results[$used])) {
+                $outcomes[$key] = $results[$used];
             } else {
                 $outcomes[$key] = false;
             }
@@ -201,6 +236,7 @@ class cachestore_apc extends cache_store implements cache_is_key_aware {
      * @return bool True if the operation was a success false otherwise.
      */
     public function set($key, $data) {
+        $key = $this->prepare_key($key);
         return apc_store($key, $data, $this->definition->get_ttl());
     }
 
@@ -213,13 +249,13 @@ class cachestore_apc extends cache_store implements cache_is_key_aware {
      *      sent ... if they care that is.
      */
     public function set_many(array $keyvaluearray) {
-        $count = 0;
+        $map = array();
         foreach ($keyvaluearray as $pair) {
-            if ($this->set($pair['key'], $pair['value'])) {
-                $count++;
-            }
+            $key = $this->prepare_key($pair['key']);
+            $map[$key] = $pair['value'];
         }
-        return $count;
+        $result = apc_store($map, null, $this->definition->get_ttl());
+        return count($map) - count($result);
     }
 
     /**
@@ -229,6 +265,7 @@ class cachestore_apc extends cache_store implements cache_is_key_aware {
      * @return bool Returns true if the operation was a success, false otherwise.
      */
     public function delete($key) {
+        $key = $this->prepare_key($key);
         return apc_delete($key);
     }
 
@@ -254,15 +291,8 @@ class cachestore_apc extends cache_store implements cache_is_key_aware {
      * @return boolean True on success. False otherwise.
      */
     public function purge() {
-        $info = apc_cache_info("user");
-        foreach ($info['cache_list'] as $item) {
-            if (isset($item['key'])) {
-                apc_delete($item['key']);
-            } else if (isset($item['info'])) {
-                apc_delete($item['info']);
-            }
-        }
-        return true;
+        $iterator = new APCIterator('user', '#^' . preg_quote($this->prefix, '#') . '#');
+        return apc_delete($iterator);
     }
 
     /**

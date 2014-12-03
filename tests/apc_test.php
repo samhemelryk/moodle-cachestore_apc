@@ -49,4 +49,38 @@ class cachestore_apc_test extends cachestore_tests {
     protected function get_class_name() {
         return 'cachestore_apc';
     }
+
+    /**
+     * Test purging the apc cache store.
+     */
+    public function test_purge() {
+        if (!cachestore_apc::are_requirements_met()) {
+            $this->markTestSkipped('Could not test cachestore_apc. Requirements are not met.');
+        }
+
+        $definition = cache_definition::load_adhoc(cache_store::MODE_APPLICATION, 'cachestore_apc', 'phpunit_test');
+        $instance = cachestore_apc::initialise_unit_test_instance($definition);
+
+        // Test a simple purge return.
+        $this->assertTrue($instance->purge());
+
+        // Test purge works.
+        $this->assertTrue($instance->set('test', 'monster'));
+        $this->assertSame('monster', $instance->get('test'));
+        $this->assertTrue($instance->purge());
+        $this->assertFalse($instance->get('test'));
+
+        // Test purge with custom data.
+        $this->assertTrue($instance->set('test', 'monster'));
+        $this->assertSame('monster', $instance->get('test'));
+        $this->assertTrue(apc_store('test', 'pirate', 180));
+        $this->assertSame('monster', $instance->get('test'));
+        $this->assertTrue(apc_exists('test'));
+        $this->assertSame('pirate', apc_fetch('test'));
+        // Purge and check that our data is gone but the the custom data is still there.
+        $this->assertTrue($instance->purge());
+        $this->assertFalse($instance->get('test'));
+        $this->assertTrue(apc_exists('test'));
+        $this->assertSame('pirate', apc_fetch('test'));
+    }
 }
