@@ -28,7 +28,7 @@
  * @copyright  2012 Sam Hemelryk
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class cachestore_apc extends cache_store implements cache_is_key_aware {
+abstract class cachestore_apc extends cache_store implements cache_is_key_aware {
 
     /**
      * The required version of APC for this extension.
